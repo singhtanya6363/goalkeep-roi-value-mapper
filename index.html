@@ -263,15 +263,15 @@ function renderRatings(){
   const wrapper = document.getElementById('ratings-wrapper');
   const groups = groupBy(ratingQuestions,'area');
   let html = '<div class="card-title" style="margin:22px 0 12px">Rate each area from 1 to 5</div>';
-  Object.entries(groups).forEach(([area,questions])=>{
-    const meta = AREA_META[area] || AREA_META['Financial ROI'];
-    html += `<div class="rating-group-title"><span class="area-dot area-${meta.key}"></span>${escapeHtml(area)}</div>`;
+
+  Object.entries(groups).forEach(([,questions])=>{
     questions.forEach(q=>{
       const baseline = loadedBaseline?.ratings?.find(r=>r.question_id===q.id);
       const ref = surveyType==='endline' && baseline
         ? `<div class="baseline-ref"><strong>Baseline response</strong><b>${escapeHtml(String(baseline.baseline_rating || '—'))} / 5</b>${baseline.baseline_reason ? `<div>${escapeHtml(baseline.baseline_reason)}</div>`:''}</div>`
         : '';
       const disabled = surveyType==='endline' && !loadedBaseline ? 'disabled' : '';
+
       html += `<div class="rating-card" data-rating-id="${q.id}">
         <div class="rating-question">${escapeHtml(surveyType==='endline' ? q.endline : q.baseline)}</div>
         ${ref}
@@ -279,10 +279,14 @@ function renderRatings(){
           ${[1,2,3,4,5].map(v=>`<button type="button" class="rating-btn" data-rating="${q.id}" data-value="${v}" onclick="setRating('${q.id}',${v})" ${disabled}>${v}</button>`).join('')}
         </div>
         <div class="scale"><span>1 — Not at all</span><span>5 — Very well</span></div>
-        <div class="field"><label for="rating-reason-${q.id}">Reason for this rating</label><textarea id="rating-reason-${q.id}" ${disabled}></textarea></div>
+        <div class="field">
+          <label for="rating-reason-${q.id}">Reason for this rating</label>
+          <textarea id="rating-reason-${q.id}" ${disabled}></textarea>
+        </div>
       </div>`;
     });
   });
+
   wrapper.innerHTML = html;
 }
 
@@ -457,7 +461,7 @@ function endlineFieldsHtml(metric){
   const directFinancial = metric.type==='currency';
   const monetary = directFinancial
     ? `<div class="notice">This metric is already a monetary value, so no conversion is required.</div>`
-    : metric.askMonetisation ? `<div class="section"><div class="section-title">Can this change be converted into monetary value?</div><div class="inline-choices" id="monetise-${metric.id}">${['Yes','No','Not sure'].map(v=>`<button type="button" class="choice-btn" onclick="setMonetisable('${metric.id}','${v}')">${v}</button>`).join('')}</div><div class="conditional" id="money-details-${metric.id}"><div class="grid-2" style="margin-top:10px"><div class="field"><label>₹ value per unit</label><div class="currency-wrap"><span>₹</span><input id="value-per-unit-${metric.id}" type="number" step="any"></div></div><div class="field"><label>Basis for this value</label><input id="value-basis-${metric.id}"></div></div></div></div>` : '';
+    : metric.askMonetisation ? `<div class="section"><div class="section-title">Can this change be converted into monetary value?</div><div class="inline-choices" id="monetise-${metric.id}">${['Yes','No','Not sure'].map(v=>`<button type="button" class="choice-btn" onclick="setMonetisable('${metric.id}','${v}')">${v}</button>`).join('')}</div><div class="conditional" id="money-details-${metric.id}"><div class="grid-2" style="margin-top:10px"><div class="field"><label>₹ value per unit</label><div class="currency-wrap"><span>₹</span><input id="value-per-unit-${metric.id}" type="number" step="any"></div></div><div class="field"><label>How did you estimate this ₹ value?</label><input id="value-basis-${metric.id}" placeholder="e.g. 2 staff hours × ₹250 per hour"><div class="help">For example: staff cost per hour, time spent on the task, an external vendor quote, budget records, or another reasonable estimate.</div></div></div></div></div>` : '';
   return `<div class="section"><div class="section-title">What changed?</div><textarea id="what-changed-${metric.id}"></textarea></div>
     <div class="section"><div class="section-title">Evidence / source</div><textarea id="evidence-${metric.id}"></textarea></div>
     ${monetary}
